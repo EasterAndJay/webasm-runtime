@@ -122,7 +122,30 @@ Memory imports work just like function imports, only Memory objects are passed a
 They allow JavaScript to fetch and create the initial contents of memory before or concurrently with module compilation.
 They allow a single Memory object to be imported by multiple module instances, which is a critical building block for implementing dynamic linking in WebAssembly.
 
-TODO:
+## Tables
 
-- Tables section
+A WebAssembly Table is a resizable typed array of references that can be accessed by both JavaScript and WebAssembly code.
 
+WebAsssembly defines a distinction between a typed of array of bytes (Memory) and a typed array of references (Table) for the following reason:
+
+While Memory provides a resizable typed array of raw bytes, it is unsafe for references to be stored in a Memory since a reference is an engine-trusted value whose bytes must not be read or written directly by content for safety, portability, and stability reasons.
+
+Currently, function pointers are the only reference type supported by Tables. More types will be added in the future.
+
+Example of indirect-calling of functions exported by wasm in a table:
+
+```
+WebAssembly.instantiateStreaming(fetch('table.wasm'))
+.then(function(obj) {
+  var tbl = results.instance.exports.tbl;
+  console.log(tbl.get(0)());  // 13
+  console.log(tbl.get(1)());  // 42
+});
+```
+
+## Multiplicity
+
+* One module can have N Instances, in the same way that one function literal can produce N closure values.
+* One module instance can use 0–1 memory instances, which provide the "address space" of the instance. Future versions of WebAssembly may allow 0–N memory instances per module instance (see Multiple Tables and Memories).
+* One module instance can use 0–1 table instances — this is the "function address space" of the instance, used to implement C function pointers. Future versions of WebAssembly may allow 0–N table instances per module instance in the future.
+* One memory or table instance can be used by 0–N module instances — these instances all share the same address space, allowing dynamic linking.
