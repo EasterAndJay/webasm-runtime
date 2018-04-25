@@ -1,4 +1,6 @@
-WebAssembly notes
+# WebAssembly notes
+
+## Modules
 
 The fundamental unit of WebAssembly code is a module.
 
@@ -13,6 +15,8 @@ This is an example S-expression:
 `(module (memory 1) (func))`
 
 This means a module root node with a memory child node (attribute = 1) and a func child node.
+
+## Functions
 
 All code in modules are contained in functions. We represent a function as the following:
 
@@ -34,10 +38,10 @@ e.g.
 
 WebAssembly currently supports 4 types:
 
-	•	i32: 32-bit integer
-	•	i64: 64-bit integer
-	•	f32: 32-bit float
-	•	f64: 64-bit float
+	*	i32: 32-bit integer
+	*	i64: 64-bit integer
+	*	f32: 32-bit float
+	*	f64: 64-bit float
 
 You can refer to locals, which are indexed from 0 and start with the parameters, with the `get_local` and `set_local` instructions. These instructions either take an index or a name (starts with $) to specify which local variable.
 
@@ -54,6 +58,8 @@ Similar to how local variables work, functions are identified by an index by def
 Here, “add” refers to the name used to call the function from JavaScript, while $add is specifying we want to export the function named $add in our WebAssembly module.
 
 The above text representation of WebAssembly code is typically saved in. `.wat` file. You can convert this to binary format, `.wasm`, using `wabt`.
+
+## JavaScript Interface
 
 Here is how you would load the exported function from the WebAssembly binary using JavaScript:
 
@@ -95,9 +101,28 @@ WebAssembly.instantiateStreaming(fetch('logger.wasm'), importObject)
 });
 
 ```
+## Memory
+
+The low-level memory model of WebAssembly is represented as a contiguous range of untyped bytes. You read and write this memory, referrred to as Linear Memory, with load and store instructions.
+
+Each WebAssembly instance accesses it's own instance of Linear Memory; you may have multiple webasm instances within one web app, which have isolated instances of Linear Memory.
+
+WebAssembly Memory is measured in units of 64KB pages.
+
+From JavaScript, you can construct an instance of WebAssembly Memory like so:
+
+`var memory = new WebAssembly.Memory({initial:10, maximum:100});`
+
+Here, the instance has 10 pages initially, with a max of 100 pages (6.4 MB).
+
+Just like functions, linear memories can be defined inside a module or imported. Similarly, a module may also optionally export its memory. This means that JavaScript can get access to the memory of a WebAssembly instance either by creating a new `WebAssembly.Memory` and passing it in as an import or by receiving a Memory export (via `Instance.prototype.exports`).
+
+Memory imports work just like function imports, only Memory objects are passed as values instead of JavaScript functions. Memory imports are useful for two reasons:
+
+They allow JavaScript to fetch and create the initial contents of memory before or concurrently with module compilation.
+They allow a single Memory object to be imported by multiple module instances, which is a critical building block for implementing dynamic linking in WebAssembly.
 
 TODO:
 
-- Memory section
 - Tables section
 
