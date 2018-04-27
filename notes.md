@@ -99,3 +99,74 @@ function _main() {
 ```
 
 I know right? Where is the string "Hello World"? Spoiler alert it is no where in the code. Ofcoure there are a lot of abstractions and the characters are encoded as their codes and somehow find their way into the `$vararg_buffer` or the number `384`. It seems like the `$vararg_buffer` is supposed to contain the arguments and is picked up from the top of stack.
+
+
+A little more involved c program with a loop:
+
+```
+#include <stdio.h>
+
+int main() {
+  
+  int counter = 0;
+  for(int i=0;i<1000;i++){
+  	counter += 1;
+  }
+  printf("%d\n",counter);  
+  return counter;
+}
+```
+
+Corresponding JS output:
+
+```
+function _main() {
+ var $0 = 0, $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $vararg_buffer = 0, label = 0, sp = 0;
+ sp = STACKTOP;
+ STACKTOP = STACKTOP + 16|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(16|0);
+ $vararg_buffer = sp;
+ $0 = 0;
+ $1 = 0;
+ $2 = 0;
+ while(1) {
+  $3 = $2;
+  $4 = ($3|0)<(1000);
+  $5 = $1;
+  if (!($4)) {
+   break;
+  }
+  $6 = (($5) + 1)|0;
+  $1 = $6;
+  $7 = $2;
+  $8 = (($7) + 1)|0;
+  $2 = $8;
+ }
+ HEAP32[$vararg_buffer>>2] = $5;
+ (_printf(384,$vararg_buffer)|0);
+ $9 = $1;
+ STACKTOP = sp;return ($9|0);
+}
+```
+
+Let's try some LLVM optimizations. The JS code looks too verbose. Going through [documentation](http://kripken.github.io/emscripten-site/docs/tools_reference/emcc.html#emscripten-compiler-frontend-emcc) on `emcc` command, I see that there are multiple flags for optimizations:
+
+* `-O0` -> No optimizations (default). This is the recommended setting for starting to port a project, as it includes various assertions.
+* `-O1` -> Simple optimizations. These include using asm.js, LLVM -O1 optimizations, relooping, removing runtime assertions and C++ exception catching, and enabling `-s ALIASING_FUNCTION_POINTERS=1`. This is the recommended setting when you want a reasonably optimized build that is generated as quickly as possible (it builds much faster than `-O2`).
+
+Running the optimization `O1` for the code above using command:
+
+`./emcc -O1 tests/hello_world.c`
+
+It outputs the following JS for the same loop C code:
+
+```
+function _main() {
+ var $vararg_buffer = 0, label = 0, sp = 0;
+ sp = STACKTOP;
+ STACKTOP = STACKTOP + 16|0;
+ $vararg_buffer = sp;
+ HEAP32[$vararg_buffer>>2] = 1000;
+ (_printf(380,$vararg_buffer)|0);
+ STACKTOP = sp;return 1000;
+}
+```
