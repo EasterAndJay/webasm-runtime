@@ -43,3 +43,59 @@ The type system consists of basic types such as integer or floating point number
 A type construct in a concrete language can be represented by combining these basic types in LLVM. For example, a class in C++ can be represented by a mix of structures, functions and arrays of function pointers.
 
 The LLVM JIT compiler can optimize unneeded static branches out of a program at runtime, and thus is useful for partial evaluation in cases where a program has many options, most of which can easily be determined unneeded in a specific environment.
+
+## Evolution to WebAssembly
+
+WebAssembly is a full fledged compile target but it started off as `asm.js` -  a spec led by the Mozilla team to formalize a subset of javascript. The great insight was that compiled javascript can be (a lot) faster than running regular js written by humans.
+
+
+JS engines are getting faster and have become suitable for running large compiled codebases too but it is important to understand what kind of optimizations they employ under the hood to speed up JS performance.
+
+The Emscripten project is based on these optimizations and is widely used to compile to JS.
+
+The architecture is as follows:
+
+C/C++ =========> LLVM =========> Emscripten =========> Javascript
+
+Now I already did some research on LLVM and what it does. But the above representation gives us a good insight on how they smartly used LLVM's IR (also called LLVM bitcode) and based Emscripten off of that.
+
+Emscripten takes the LLVM bitcode (with all its glorious optimizations) and then converts it into Javascript. I will do some more research on LLVM bitcode and  may be push some examples here too. But long story short, LLVM bitcode is like Java Bytecode (a semi-human readable Machine code representation). [The documentation](https://llvm.org/docs/BitCodeFormat.html#encoding-of-llvm-ir) describes `bitcode` as "a bitstream container format and an encoding of LLVM IR into the container format."
+
+This architecture is very powerful. Since it can feed off of LLVM's bitcode, essentially any language that can be compiled to an LLVM bitcode representation can be compiled to Javascript! There are a lot of projects that explore translation of languages to C/C++ too which easily fits into the Emscripten toolchain.
+
+Also found an excellent [list](https://github.com/jashkenas/coffeescript/wiki/List-of-languages-that-compile-to-JS) of languages that compile to JS. This list is impressive and growing everyday. WebAssembly only takes it further.
+
+I decided to experiment on emscripten and see what JS it spits out. We can then think about what optimizations is LLVM and the Emscripten toolchain explicitly introducing and we can later look at benchmarking the results.
+
+Let's try to run a basic `hello_world.c` program:
+
+```
+#include <stdio.h>
+
+int main() {
+  printf("Hello World\n");  
+  return 0;
+}
+```
+
+I compile (transpile) the code to JS using the following command:
+
+`./emcc tests/hello_world.c`
+
+This spits out an output file `a.out.js` which can be included in a browser or run directly using `node a.out.js`. The output JS file is huge (9026 lines to be exact) which seems quite a bit for a `hello world` program but it is important to appreciate that it has all the C bindings and essentially can take large game engines written in C and convert them to JS. So 9026 lines is quite a feat!
+
+But this makes it extremely convoluted for me (humans) to make sense of the output. I will spend some time next week also getting into this file and understanding the different abstractions. All the optimizations live in this file, we just need to find them. After a lot of digging, I found the `main` function which was conveniently renamed `_main()`. It looks like:
+
+```
+function _main() {
+ var $0 = 0, $vararg_buffer = 0, label = 0, sp = 0;
+ sp = STACKTOP;
+ STACKTOP = STACKTOP + 16|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(16|0);
+ $vararg_buffer = sp;
+ $0 = 0;
+ (_printf(384,$vararg_buffer)|0);
+ STACKTOP = sp;return 0;
+}
+```
+
+I know right? Where is the string "Hello World"? Spoiler alert it is no where in the code. Ofcoure there are a lot of abstractions and the characters are encoded as their codes and somehow find their way into the `$vararg_buffer` or the number `384`. It seems like the `$vararg_buffer` is supposed to contain the arguments and is picked up from the top of stack.
