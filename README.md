@@ -12,3 +12,4 @@ Course Project for CS 263: Runtime Systems at UC Santa Barbara
 * Start the webserver
   * `${HOME}.cargo/bin/http`
 
+[Rust and WebAssembly Tutorial](https://rust-lang-nursery.github.io/rust-wasm/introduction.html)
