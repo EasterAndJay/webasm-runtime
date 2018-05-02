@@ -43,3 +43,130 @@ The type system consists of basic types such as integer or floating point number
 A type construct in a concrete language can be represented by combining these basic types in LLVM. For example, a class in C++ can be represented by a mix of structures, functions and arrays of function pointers.
 
 The LLVM JIT compiler can optimize unneeded static branches out of a program at runtime, and thus is useful for partial evaluation in cases where a program has many options, most of which can easily be determined unneeded in a specific environment.
+
+## Evolution to WebAssembly
+
+WebAssembly is a full fledged compile target but it started off as `asm.js` -  a spec led by the Mozilla team to formalize a subset of javascript. The great insight was that compiled javascript can be (a lot) faster than running regular js written by humans.
+
+
+JS engines are getting faster and have become suitable for running large compiled codebases too but it is important to understand what kind of optimizations they employ under the hood to speed up JS performance.
+
+The Emscripten project is based on these optimizations and is widely used to compile to JS.
+
+The architecture is as follows:
+
+C/C++ =========> LLVM =========> Emscripten =========> Javascript
+
+Now I already did some research on LLVM and what it does. But the above representation gives us a good insight on how they smartly used LLVM's IR (also called LLVM bitcode) and based Emscripten off of that.
+
+Emscripten takes the LLVM bitcode (with all its glorious optimizations) and then converts it into Javascript. I will do some more research on LLVM bitcode and  may be push some examples here too. But long story short, LLVM bitcode is like Java Bytecode (a semi-human readable Machine code representation). [The documentation](https://llvm.org/docs/BitCodeFormat.html#encoding-of-llvm-ir) describes `bitcode` as "a bitstream container format and an encoding of LLVM IR into the container format."
+
+This architecture is very powerful. Since it can feed off of LLVM's bitcode, essentially any language that can be compiled to an LLVM bitcode representation can be compiled to Javascript! There are a lot of projects that explore translation of languages to C/C++ too which easily fits into the Emscripten toolchain.
+
+Also found an excellent [list](https://github.com/jashkenas/coffeescript/wiki/List-of-languages-that-compile-to-JS) of languages that compile to JS. This list is impressive and growing everyday. WebAssembly only takes it further.
+
+I decided to experiment on emscripten and see what JS it spits out. We can then think about what optimizations is LLVM and the Emscripten toolchain explicitly introducing and we can later look at benchmarking the results.
+
+Let's try to run a basic `hello_world.c` program:
+
+```
+#include <stdio.h>
+
+int main() {
+  printf("Hello World\n");  
+  return 0;
+}
+```
+
+I compile (transpile) the code to JS using the following command:
+
+`./emcc tests/hello_world.c`
+
+This spits out an output file `a.out.js` which can be included in a browser or run directly using `node a.out.js`. The output JS file is huge (9026 lines to be exact) which seems quite a bit for a `hello world` program but it is important to appreciate that it has all the C bindings and essentially can take large game engines written in C and convert them to JS. So 9026 lines is quite a feat!
+
+But this makes it extremely convoluted for me (humans) to make sense of the output. I will spend some time next week also getting into this file and understanding the different abstractions. All the optimizations live in this file, we just need to find them. After a lot of digging, I found the `main` function which was conveniently renamed `_main()`. It looks like:
+
+```
+function _main() {
+ var $0 = 0, $vararg_buffer = 0, label = 0, sp = 0;
+ sp = STACKTOP;
+ STACKTOP = STACKTOP + 16|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(16|0);
+ $vararg_buffer = sp;
+ $0 = 0;
+ (_printf(384,$vararg_buffer)|0);
+ STACKTOP = sp;return 0;
+}
+```
+
+I know right? Where is the string "Hello World"? Spoiler alert it is no where in the code. Ofcoure there are a lot of abstractions and the characters are encoded as their codes and somehow find their way into the `$vararg_buffer` or the number `384`. It seems like the `$vararg_buffer` is supposed to contain the arguments and is picked up from the top of stack.
+
+
+A little more involved c program with a loop:
+
+```
+#include <stdio.h>
+
+int main() {
+  
+  int counter = 0;
+  for(int i=0;i<1000;i++){
+  	counter += 1;
+  }
+  printf("%d\n",counter);  
+  return counter;
+}
+```
+
+Corresponding JS output:
+
+```
+function _main() {
+ var $0 = 0, $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $vararg_buffer = 0, label = 0, sp = 0;
+ sp = STACKTOP;
+ STACKTOP = STACKTOP + 16|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(16|0);
+ $vararg_buffer = sp;
+ $0 = 0;
+ $1 = 0;
+ $2 = 0;
+ while(1) {
+  $3 = $2;
+  $4 = ($3|0)<(1000);
+  $5 = $1;
+  if (!($4)) {
+   break;
+  }
+  $6 = (($5) + 1)|0;
+  $1 = $6;
+  $7 = $2;
+  $8 = (($7) + 1)|0;
+  $2 = $8;
+ }
+ HEAP32[$vararg_buffer>>2] = $5;
+ (_printf(384,$vararg_buffer)|0);
+ $9 = $1;
+ STACKTOP = sp;return ($9|0);
+}
+```
+
+Let's try some LLVM optimizations. The JS code looks too verbose. Going through [documentation](http://kripken.github.io/emscripten-site/docs/tools_reference/emcc.html#emscripten-compiler-frontend-emcc) on `emcc` command, I see that there are multiple flags for optimizations:
+
+* `-O0` -> No optimizations (default). This is the recommended setting for starting to port a project, as it includes various assertions.
+* `-O1` -> Simple optimizations. These include using asm.js, LLVM -O1 optimizations, relooping, removing runtime assertions and C++ exception catching, and enabling `-s ALIASING_FUNCTION_POINTERS=1`. This is the recommended setting when you want a reasonably optimized build that is generated as quickly as possible (it builds much faster than `-O2`).
+
+Running the optimization `O1` for the code above using command:
+
+`./emcc -O1 tests/hello_world.c`
+
+It outputs the following JS for the same loop C code:
+
+```
+function _main() {
+ var $vararg_buffer = 0, label = 0, sp = 0;
+ sp = STACKTOP;
+ STACKTOP = STACKTOP + 16|0;
+ $vararg_buffer = sp;
+ HEAP32[$vararg_buffer>>2] = 1000;
+ (_printf(380,$vararg_buffer)|0);
+ STACKTOP = sp;return 1000;
+}
+```
