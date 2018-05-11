@@ -59,6 +59,9 @@ C/C++ =========> LLVM =========> Emscripten =========> Javascript
 
 Now I already did some research on LLVM and what it does. But the above representation gives us a good insight on how they smartly used LLVM's IR (also called LLVM bitcode) and based Emscripten off of that.
 
+
+## asm.js
+
 Emscripten takes the LLVM bitcode (with all its glorious optimizations) and then converts it into Javascript. I will do some more research on LLVM bitcode and  may be push some examples here too. But long story short, LLVM bitcode is like Java Bytecode (a semi-human readable Machine code representation). [The documentation](https://llvm.org/docs/BitCodeFormat.html#encoding-of-llvm-ir) describes `bitcode` as "a bitstream container format and an encoding of LLVM IR into the container format."
 
 This architecture is very powerful. Since it can feed off of LLVM's bitcode, essentially any language that can be compiled to an LLVM bitcode representation can be compiled to Javascript! There are a lot of projects that explore translation of languages to C/C++ too which easily fits into the Emscripten toolchain.
@@ -148,6 +151,8 @@ function _main() {
 }
 ```
 
+## LLVM optimizations
+
 Let's try some LLVM optimizations. The JS code looks too verbose. Going through [documentation](http://kripken.github.io/emscripten-site/docs/tools_reference/emcc.html#emscripten-compiler-frontend-emcc) on `emcc` command, I see that there are multiple flags for optimizations:
 
 * `-O0` -> No optimizations (default). This is the recommended setting for starting to port a project, as it includes various assertions.
@@ -170,6 +175,8 @@ function _main() {
  STACKTOP = sp;return 1000;
 }
 ```
+
+## Execution pipeline of asm.js
 
 I wanted to explore the pipeline of the entire execution of an `asm.js` project because that could give us a lot of intuition behind the optimizations they use. Browsers' JS runtime implicitly optimize JS execution using some tricks behind the scene. A little digging led me to the `run` function which is the first method that's called during the module execution.
 
@@ -272,6 +279,8 @@ The `callMain` method creates the stack and loads the `argv` and `argc` on stack
   }
 }
 ```
+
+## Insights
 
 And on further investigation, I notice this:
 
