@@ -303,3 +303,92 @@ From Mozilla's docs on [Typed Arrays](https://developer.mozilla.org/en-US/docs/W
 To achieve maximum flexibility and efficiency, JavaScript typed arrays split the implementation into buffers and views. A buffer (implemented by the ArrayBuffer object) is an object representing a chunk of data; it has no format to speak of and offers no mechanism for accessing its contents. In order to access the memory contained in a buffer, you need to use a view. A view provides a context — that is, a data type, starting offset, and the number of elements — that turns the data into a typed array.
 
 ![Array Buffer architecture](https://mdn.mozillademos.org/files/8629/typed_arrays.png)
+
+## WebAssmebly module breakdown
+
+We see how type coercion and use of typed arrays as fast memory units led to development of `asm.js`. WebAssembly was a natural consequence of this development where instead of having a subset of js as a compile target, there was consensus on an even lower level spec that resembles almost assembly code and should be understandable by all the major browser JS engines today.
+
+That's how WebAssembly was born. It is not supposed to replace JS, as a matter of fact WebAssembly is created so that it sits very comfortably with JS and developers can write `wasm` modules for inefficient JS code (by writing that part in C and compiling it to `wasm` using the emscripten toolchain discussed previously) and include/call the `wasm` module seemlessly from the browser frontend.
+
+I discovered this amazing project called [WebAssembly Studio](https://webassembly.studio/). It is a WebAssembly playground where we can create C projects compile them to `wasm` module, run and debug them. And the best part is we can also edit the `wasm` module in the `wat` format which is an intermediate (semi-human readable) representation very much like Bytecode.
+
+Th project depends on several excellent libraries and tools:
+
+* Monaco Editor is used for rich text editing, tree views and context menus.
+* WebAssembly Binary Toolkit is used to assemble and disassemble .wasm files.
+* Binaryen is used to validate and optimize .wasm files.
+* Clang Format is used to format C/C++ files.
+* Cassowary.js is used to make split panes work.
+* Showdown is used to automatically preview .md files.
+* Capstone.js is used to disassemble x86 code.
+* LLVM, Rust, Emscripten running server side.
+
+We plan to use this tool extensively to test and learn about `wasm` modules. Let's come back to the hello world program and look at the `wat` output. So the input `hello_world.c` looks like:
+
+```
+int main() {
+  printf("Hello World\n");  
+  return 0;
+}
+```
+
+They had other glue code in this C file for `putcjs` - An external function that is implemented in JavaScript and a basic implementation of the writev sys call. Let's ignore that for now.
+
+This generates the output `main.wasm` which is easily included in the `main.js` file so that it can be run in browsers.
+
+Quick comparison on just the amount of code generated for `asm.js` and `wasm` implementation of the same `hello_world.c`:
+
+`Wasm` - 1943 lines
+`asm.js` - 9014 lines
+
+`Wasm` - 40 functions (found by regex, so it is an upper bound)
+`asm.js` - 213 functions (found by regex, so it is an upper bound)
+
+A major caveat here is that I have just counted the lines from the `wat` representation of the `wasm` module from the WebAssmebly Studio. The `wat` file is reassembled as `wasm` module which would obviously be lower level and therefore have a bigger code base. But, having a low level IR representation that is so compact is still a huge gain over a much bigger `asm.js` module.
+
+The `asm.js` module's output is bigger primarily because of the way it explicitly manages memory as typed arrays. The module JS file therefore basically has JS function implementations of most of the C standard library functions, especially memory related functions. So there are a ton of functions to convert strings to 32 bit integers or 16 bit integers and write them to array buffers since that's how the entire memory is orchestrated.
+
+The `wat` output for the program looks like:
+
+```
+(module
+  (type $t0 (func (param i32 i32 i32) (result i32)))
+  (type $t1 (func (param i32)))
+  (type $t2 (func (param i32) (result i32)))
+  (type $t3 (func (param i32 i32 i32 i32) (result i32)))
+  (type $t4 (func (param i32 i32) (result i32)))
+  (type $t5 (func (param i32 i32 i32 i32 i32 i32) (result i32)))
+  (type $t6 (func (param i32 i32 i32 i32 i32) (result i32)))
+  (type $t7 (func))
+  (type $t8 (func (result i32)))
+  (type $t9 (func (param i32 i64 i32) (result i64)))
+  (type $t10 (func (param i32 i32 i32 i32)))
+  ...
+  ...
+
+  (func $main (export "main") (type $t8) (result i32)
+    i32.const 1024
+    call $puts
+    drop
+    i32.const 0)
+
+  ...
+  ...
+
+  (memory $memory (export "memory") 2)
+  (global $g0 (mut i32) (i32.const 67776))
+  (global $__heap_base (export "__heap_base") i32 (i32.const 67776))
+  (global $__data_end (export "__data_end") i32 (i32.const 2232))
+  (elem (i32.const 1) $__stdio_write $__stdio_close $__stdout_write $__stdio_seek)
+  (data (i32.const 1024) "Hello World\00")
+)
+```
+
+I have removed the other code from the module, to just highlight the most relevant parts for my initial understanding. 
+
+## Insights
+* Right off the bat, we see an extensive use of types again, ints are also separated into 32 and 64 bits for efficient mem utilization and this code looks very much like Java ByteCode that we have been seeing in class.
+* Memory is initialized as typed array again I think (notice the `$__heap_base` initilization)
+* The `wat` file is much more interpretable and simpler in structure than the monolithic `asm.js` module. This suggests that a lot of the memory orchestration that was explicit and high level in `asm.js` is handled at a lower level in `wasm` because of the browser support which allows a lighter, richer API even at the IR `wat` level.
+
+I will spend the next week to understand how a `wasm` module is executed. Is it a Stack machine? How is memory initialied and handled?
