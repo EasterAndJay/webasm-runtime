@@ -392,3 +392,157 @@ I have removed the other code from the module, to just highlight the most releva
 * The `wat` file is much more interpretable and simpler in structure than the monolithic `asm.js` module. This suggests that a lot of the memory orchestration that was explicit and high level in `asm.js` is handled at a lower level in `wasm` because of the browser support which allows a lighter, richer API even at the IR `wat` level.
 
 I will spend the next week to understand how a `wasm` module is executed. Is it a Stack machine? How is memory initialied and handled?
+
+## Memory
+
+In the low-level memory model of WebAssembly, memory is represented as a contiguous range of untyped bytes called Linear Memory that are read and written by load and store instructions inside the module.  In this memory model, any load or store can access any byte in the entire linear memory, which is necessary to faithfully represent C/C++ concepts like pointers.
+
+Unlike a native C/C++ program, however, where the available memory range spans the entire process, the memory accessible by a particular WebAssembly Instance is confined to one specific — potentially very small — range contained by a WebAssembly Memory object. 
+
+Basically, every WebAssembly Module which compiles into an instance is restricted to a Memory Object which we can define using the JS API.
+
+I wanted to test this out in the browser.
+
+I started with this simple module `memory.wat`:
+
+```
+(module
+  (memory (import "js" "mem") 1)
+  (func (export "accumulate") (param $ptr i32) (param $len i32) (result i32)
+    (local $end i32)
+    (local $sum i32)
+    (set_local $end (i32.add (get_local $ptr) (i32.mul (get_local $len) (i32.const 4))))
+    (block $break (loop $top
+      (br_if $break (i32.eq (get_local $ptr) (get_local $end)))
+      (set_local $sum (i32.add (get_local $sum)
+                               (i32.load (get_local $ptr))))
+        (set_local $ptr (i32.add (get_local $ptr) (i32.const 4)))
+        (br $top)
+    ))
+    (get_local $sum)
+  )
+)
+```
+
+After compiling it to `memory.wasm`, I include it into an HTML document, using the following snippet:
+
+```
+<script>
+  var memory = new WebAssembly.Memory({initial:1, maximum:1});
+  WebAssembly.instantiateStreaming(fetch('memory.wasm'), { js: { mem: memory } })
+  .then(obj => {
+    var i32 = new Uint32Array(memory.buffer);
+    for (var i = 0; i < 10; i++) {
+      i32[i] = i;
+    }
+    var sum = obj.instance.exports.accumulate(0, 10);
+    console.log(sum);
+  });
+</script>
+```
+
+This uses the `WebAssembly.instantiateStreaming()` method, which can take a fetch() call as its first argument, and will handle fetching, compiling, and instantiating the module in one step, accessing the raw byte code as it streams from the server. While this is efficient and the recommended way in the [docs](https://developer.mozilla.org/en-US/docs/WebAssembly/Loading_and_running), I get the following error when I try to load this html document on Chrome:
+
+```
+streaming.html:1 Uncaught (in promise) TypeError: Failed to execute 'compile' on 'WebAssembly': Incorrect response MIME type. Expected 'application/wasm'.
+```
+
+I get this error because `application/wasm` is not a recognized MimeType by the server and I therefore had to resort to the older `WebAssembly.instantiate method`, which doesn't work on the direct stream. We need an extra step of converting the fetched byte code to an ArrayBuffer.
+
+So after the fix, the loading part looks like:
+
+```
+<script>
+  var memory = new WebAssembly.Memory({initial:1, maximum:1});
+  var importObject = { js: { mem: memory } }
+  fetch('memory.wasm')
+  .then(response => response.arrayBuffer())
+  .then(bytes => WebAssembly.compile(bytes))
+  .then(module => WebAssembly.instantiate(module, importObject))
+  .then(instance => {
+    console.log('Module has been instantiated.');
+    var i32 = new Uint32Array(memory.buffer);
+    for (var i = 0; i < 10; i++) {
+      i32[i] = i;
+    }
+    //console.log(instance.exports);
+    var sum = instance.exports.accumulate(0, 10);
+    console.log(sum);
+  });
+</script>
+```
+
+The unit of `initial` and `maximum` is WebAssembly pages — these are fixed to 64KB in size. WebAssembly memory exposes its bytes by simply providing a buffer getter/setter that returns an ArrayBuffer.
+
+So we are creating bounds for the memory using the `memory` object which our module imports. Let's try and test these bounds by over-writing it. I modify the JS to:
+
+```
+<script>
+  var memory = new WebAssembly.Memory({initial:1, maximum:1});
+
+  //var importObject = { imports: { imported_func: arg => console.log(arg) } };
+  var importObject = { js: { mem: memory } }
+  fetch('memory.wasm')
+  .then(response => response.arrayBuffer())
+  .then(bytes => WebAssembly.compile(bytes))
+  .then(module => WebAssembly.instantiate(module, importObject))
+  .then(instance => {
+    console.log('Module has been instantiated...');
+    var i32 = new Uint32Array(memory.buffer);
+    for (var i = 0; i < 10; i++) {
+      i32[i] = i;
+    }
+    //console.log(instance.exports);
+    var sum = instance.exports.accumulate(0, 100000);
+    console.log(sum);
+  });
+</script>
+```
+
+Notice that while calling the exported function `accumulate` I pass in the length as `100000`. On running the above code, I get the following result in Chrome Debugger:
+
+```
+wasm-093d7152-0:17 Uncaught (in promise) RuntimeError: memory access out of bounds
+    at wasm-function[0]:28
+    at fetch.then.then.then.then.instance (http://127.0.0.1:4201/memory.html:27:36)
+
+<WASM UNNAMED>  @ wasm-093d7152-0:17
+fetch.then.then.then.then.instance  @ memory.html:27
+Promise.then (async)    
+(anonymous) @ memory.html:20
+
+```
+
+What's fascinating is that the debugger creates source maps with the source code of the `wasm` module. So I can actually edit the `wat` raw text in the debugger and clearly see what went wrong. For instance, here on a little inspection, it took me to this code:
+
+```
+func (param i32 i32) (result i32)
+(local i32 i32)
+  get_local 0
+  get_local 1
+  i32.const 4
+  i32.mul
+  i32.add
+  set_local 2
+  block
+    loop
+      get_local 0
+      get_local 2
+      i32.eq
+      br_if 1
+      get_local 3
+      get_local 0
+      i32.load offset=0 align=4
+      i32.add
+      set_local 3
+      get_local 0
+      i32.const 4
+      i32.add
+      set_local 0
+      br 0
+    end
+  end
+  get_local 3
+end
+```
+The debugger also tells me that the Out of bounds exception is thrown while executing the line `i32.load offset=0 align=4`.
