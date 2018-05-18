@@ -545,4 +545,4 @@ func (param i32 i32) (result i32)
   get_local 3
 end
 ```
-The debugger also tells me that the Out of bounds exception is thrown while executing the line `i32.load offset=0 align=4`.
+The debugger also tells me that the Out of bounds exception is thrown while executing the line `i32.load offset=0 align=4`. I will spend the next couple days digging deeper into Web Assembly's Memory model and how it's accessed and interpreted by the module.
