@@ -574,7 +574,10 @@ As we have seen, memory is linear and is addressed with 2 values : an `alignment
 
 As part of our study to understand Web Assembly better, we have decided to investigate program performance and profile metrics thoroughly. Our approach is to find equivalent programs in C and JS. Compile the C to `wasm` and `asm` modules and run standard v-8 profilers or Browser benchmarks.
 
-[Rosetta Code](http://rosettacode.org/wiki/Category:JavaScript) is a usefule resource in this regard. It is a repository of algorithm implementation in multiple languages and it makes for a very good data set for us. Some programs that we wish to evaluate with their brief description and links are as follows:
+[Rosetta Code](http://rosettacode.org/wiki/Category:JavaScript) is a usefule resource in this regard. It is a repository of algorithm implementation in multiple languages and it makes for a very good data set for us.
+[This](https://rosetta.alhur.es/) is another useful web App built on top of Rosetta Code that allows us to compare code snippets from two different languages.
+
+Some programs that we wish to evaluate with their brief description and links are as follows:
 
 * [K Means Clustering](http://rosettacode.org/wiki/K-means%2B%2B_clustering) - K-means++ clustering a classification of data, so that points assigned to the same cluster are similar (in some sense). It is identical to the K-means algorithm, except for the selection of initial conditions.
 A circular distribution of data partitioned into 7 colored clusters; similar to the top of a beach ball
