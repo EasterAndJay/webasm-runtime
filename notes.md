@@ -546,3 +546,48 @@ func (param i32 i32) (result i32)
 end
 ```
 The debugger also tells me that the Out of bounds exception is thrown while executing the line `i32.load offset=0 align=4`. I will spend the next couple days digging deeper into Web Assembly's Memory model and how it's accessed and interpreted by the module.
+
+The program with memory is essentially this in JS:
+
+```
+var accumulate = function(start,len){
+
+  var end;
+  var sum = 0;
+  end = start + len;
+
+  while(start < end){
+    sum = sum + start;
+    start = start + 1;
+  }
+
+  return sum;
+  
+}
+```
+
+As we have seen, memory is linear and is addressed with 2 values : an `alignment` and an `offset`. The `alignment` refers to the size of the blocks and `offset` refers to the alignment offset from the TOS. This [blog post](https://rsms.me/wasm-intro) gives a very clear description on memory layout in WebAssembly. I am including an illustration for better understanding:
+
+![Linear Memory layout](https://rsms.me/res/wasm/memory.svg)
+
+## Profiling Web Assembly and ASM programs
+
+As part of our study to understand Web Assembly better, we have decided to investigate program performance and profile metrics thoroughly. Our approach is to find equivalent programs in C and JS. Compile the C to `wasm` and `asm` modules and run standard v-8 profilers or Browser benchmarks.
+
+[Rosetta Code](http://rosettacode.org/wiki/Category:JavaScript) is a usefule resource in this regard. It is a repository of algorithm implementation in multiple languages and it makes for a very good data set for us. Some programs that we wish to evaluate with their brief description and links are as follows:
+
+* [K Means Clustering](http://rosettacode.org/wiki/K-means%2B%2B_clustering) - K-means++ clustering a classification of data, so that points assigned to the same cluster are similar (in some sense). It is identical to the K-means algorithm, except for the selection of initial conditions.
+A circular distribution of data partitioned into 7 colored clusters; similar to the top of a beach ball
+This data was partitioned into 7 clusters using the K-means algorithm.
+The task is to implement the K-means++ algorithm. Produce a function which takes two arguments: the number of clusters K, and the dataset to classify. K is a positive integer and the dataset is a list of points in the Cartesian plane. The output is a list of clusters (related sets of points, according to the algorithm).
+
+* [Holy Knight's Tour](http://rosettacode.org/wiki/Solve_a_Holy_Knight%27s_tour#JavaScript)
+* [A* Search](http://rosettacode.org/wiki/A*_search_algorithm) - The A* search algorithm is an extension of Dijkstra's algorithm useful for finding the lowest cost path between two nodes (aka vertices) of a graph. The path may traverse any number of nodes connected by edges (aka arcs) with each edge having an associated cost. The algorithm uses a heuristic which associates an estimate of the lowest cost path from this node to the goal node, such that this estimate is never greater than the actual cost.
+* [Fractal Tree](http://rosettacode.org/wiki/Fractal_tree#C) - Generate and draw a fractal tree.
+Draw the trunk.At the end of the trunk, split by some angle and draw two branches.Repeat at the end of each branch until a sufficient level of branching is reached
+* [Fast Fourier Transform](http://rosettacode.org/wiki/Fast_Fourier_transform) - Calculate the   FFT   (Fast Fourier Transform)   of an input sequence.
+* [Power Set](http://rosettacode.org/wiki/Power_set)
+* [Prime decomposition](http://rosettacode.org/wiki/Prime_decomposition) - The prime decomposition of a number is defined as a list of prime numbers which when all multiplied together, are equal to that number.
+* [Nth Root](http://rosettacode.org/wiki/Nth_root)
+* [Deep Copy](http://rosettacode.org/wiki/Deepcopy#JavaScript) - Demonstrate how to copy data structures containing complex heterogeneous and cyclic semantics.
+* [Monte Carlo methods](http://rosettacode.org/wiki/Monte_Carlo_methods) - A Monte Carlo Simulation is a way of approximating the value of a function where calculating the actual value is difficult or impossible. It uses random sampling to define constraints on the value and then makes a sort of "best guess."
