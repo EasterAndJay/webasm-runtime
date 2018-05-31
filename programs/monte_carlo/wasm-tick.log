@@ -1,0 +1,181 @@
+Statistical profiling result from isolate-0x102801e00-v8.log, (742 ticks, 62 unaccounted, 0 excluded).
+
+ [Shared libraries]:
+   ticks  total  nonlib   name
+    288   38.8%          "/usr/local/bin/node"
+     35    4.7%          "/usr/lib/system/libsystem_kernel.dylib"
+     24    3.2%          "/usr/lib/system/libsystem_platform.dylib"
+      5    0.7%          "/usr/lib/system/libsystem_malloc.dylib"
+      4    0.5%          "/usr/lib/system/libsystem_c.dylib"
+      3    0.4%          "/usr/lib/system/libsystem_pthread.dylib"
+      1    0.1%          "/usr/lib/system/libdyld.dylib"
+      1    0.1%          "/usr/lib/libc++abi.dylib"
+
+ [JavaScript]:
+   ticks  total  nonlib   name
+    226   30.5%   59.3%  Function: "WASM_function#21:module: (WASM):0:0"
+     90   12.1%   23.6%  Function: "WASM_function#68:module: (WASM):0:0"
+      1    0.1%    0.3%  Function: ~"___syscall146 /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1828:28"
+      1    0.1%    0.3%  Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+      1    0.1%    0.3%  Function: ~" /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1:11"
+
+ [C++]:
+   ticks  total  nonlib   name
+
+ [Summary]:
+   ticks  total  nonlib   name
+    319   43.0%   83.7%  JavaScript
+      0    0.0%    0.0%  C++
+      7    0.9%    1.8%  GC
+    361   48.7%          Shared libraries
+     62    8.4%          Unaccounted
+
+ [C++ entry points]:
+   ticks    cpp   total   name
+
+ [Bottom up (heavy) profile]:
+  Note: percentage shows a share of a particular caller in the total
+  amount of its parent calls.
+  Callers occupying less than 1.0% are not shown.
+
+   ticks parent  name
+    288   38.8%  "/usr/local/bin/node"
+    216   75.0%    "/usr/local/bin/node"
+     89   41.2%      Function: ~"WriteStream tty.js:66:21"
+     89  100.0%        Function: ~"createWritableStdioStream internal/process/stdio.js:151:35"
+     86   96.6%          Function: ~"getStdout internal/process/stdio.js:18:21"
+     86  100.0%            Function: ~" console.js:1:11"
+      3    3.4%          Function: ~"getStderr internal/process/stdio.js:34:21"
+      3  100.0%            Function: ~" console.js:1:11"
+     45   20.8%      Function: ~"runInThisContext bootstrap_node.js:513:28"
+     45  100.0%        Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+     45  100.0%          Function: ~"NativeModule.require bootstrap_node.js:534:34"
+      9   20.0%            Function: ~" module.js:1:11"
+      6   13.3%            Function: ~" util.js:1:11"
+      4    8.9%            Function: ~" tty.js:1:11"
+      4    8.9%            Function: ~" timers.js:1:11"
+      3    6.7%            Function: ~"setupGlobalTimeouts bootstrap_node.js:310:31"
+      3    6.7%            Function: ~" stream.js:1:11"
+      2    4.4%            Function: ~"startup bootstrap_node.js:12:19"
+      2    4.4%            Function: ~"setup_performance internal/process.js:19:27"
+      2    4.4%            Function: ~"setupInspectorCommandLineAPI bootstrap_node.js:364:40"
+      2    4.4%            Function: ~"setupGlobalVariables bootstrap_node.js:265:32"
+      2    4.4%            Function: ~" internal/loader/Loader.js:1:11"
+      2    4.4%            Function: ~" fs.js:1:11"
+      1    2.2%            Function: ~" internal/url.js:1:11"
+      1    2.2%            Function: ~" internal/loader/ModuleMap.js:1:11"
+      1    2.2%            Function: ~" internal/encoding.js:1:11"
+      1    2.2%            Function: ~" buffer.js:1:11"
+     28   13.0%      Function: ~" bootstrap_node.js:10:10"
+     10    4.6%      Function: ~" /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1607:39"
+     10  100.0%        Builtin: "PromiseHandle"
+     10  100.0%          "/usr/local/bin/node"
+     10  100.0%            Function: ~"_tickCallback internal/process/next_tick.js:151:25"
+      4    1.9%      Function: ~"setupProcessICUVersions bootstrap_node.js:433:35"
+      4  100.0%        Function: ~"startup bootstrap_node.js:12:19"
+      4  100.0%          Function: ~" bootstrap_node.js:10:10"
+      4    1.9%      Function: ~"createScript vm.js:73:22"
+      4  100.0%        Function: ~"runInThisContext vm.js:115:26"
+      4  100.0%          Function: ~"Module._compile module.js:581:37"
+      4  100.0%            Function: ~"Module._extensions..js module.js:633:37"
+      3    1.4%      Function: ~"startup bootstrap_node.js:12:19"
+      3  100.0%        Function: ~" bootstrap_node.js:10:10"
+      3    1.4%      Function: ~"createUnsafeArrayBuffer buffer.js:86:33"
+      3  100.0%        Function: ~"createPool buffer.js:95:20"
+      3  100.0%          Function: ~" buffer.js:1:11"
+      3  100.0%            Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+
+    226   30.5%  Function: "WASM_function#21:module: (WASM):0:0"
+    226  100.0%    Function: ~"Module._main /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2079:39"
+    226  100.0%      Function: ~"callMain /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2240:39"
+    226  100.0%        Function: ~"doRun /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2305:17"
+    226  100.0%          Function: ~"run /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2291:13"
+    226  100.0%            Function: ~"runCaller /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2234:43"
+
+     90   12.1%  Function: "WASM_function#68:module: (WASM):0:0"
+     90  100.0%    Function: "WASM_function#21:module: (WASM):0:0"
+     90  100.0%      Function: ~"Module._main /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2079:39"
+     90  100.0%        Function: ~"callMain /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2240:39"
+     90  100.0%          Function: ~"doRun /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2305:17"
+     90  100.0%            Function: ~"run /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:2291:13"
+
+     62    8.4%  UNKNOWN
+
+     35    4.7%  "/usr/lib/system/libsystem_kernel.dylib"
+     20   57.1%    "/usr/local/bin/node"
+      2   10.0%      Function: ~" /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1:11"
+      2  100.0%        Function: ~"Module._compile module.js:581:37"
+      2  100.0%          Function: ~"Module._extensions..js module.js:633:37"
+      2  100.0%            Function: ~"Module.load module.js:536:33"
+      1    5.0%      Stub: "CEntryStub"
+      1  100.0%        Function: ~"startup bootstrap_node.js:12:19"
+      1  100.0%          Function: ~" bootstrap_node.js:10:10"
+      1    5.0%      Function: ~"write console.js:90:15"
+      1  100.0%        Function: ~"log console.js:124:37"
+      1  100.0%          "/usr/local/bin/node"
+      1  100.0%            Function: ~"___syscall146.printChar /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1836:43"
+      1    5.0%      Function: ~"updateGlobalBufferViews /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1059:33"
+      1  100.0%        Function: ~" /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1:11"
+      1  100.0%          Function: ~"Module._compile module.js:581:37"
+      1  100.0%            Function: ~"Module._extensions..js module.js:633:37"
+      1    5.0%      Function: ~"tryCreateBuffer fs.js:527:25"
+      1  100.0%        Function: ~"fs.readFileSync fs.js:551:27"
+      1  100.0%          Function: ~"Module._extensions..js module.js:633:37"
+      1  100.0%            Function: ~"Module.load module.js:536:33"
+      1    5.0%      Function: ~"startup bootstrap_node.js:12:19"
+      1  100.0%        Function: ~" bootstrap_node.js:10:10"
+      1    5.0%      Function: ~"runInThisContext bootstrap_node.js:513:28"
+      1  100.0%        Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+      1  100.0%          Function: ~"NativeModule.require bootstrap_node.js:534:34"
+      1  100.0%            Function: ~"startup bootstrap_node.js:12:19"
+      1    5.0%      Function: ~"realpathSync fs.js:1580:40"
+      1  100.0%        Function: ~"toRealPath module.js:153:20"
+      1  100.0%          Function: ~"Module._findPath module.js:172:28"
+      1  100.0%            Function: ~"Module._resolveFilename module.js:517:35"
+      1    5.0%      Function: ~"promisify internal/util.js:204:19"
+      1  100.0%        Function: ~" internal/loader/resolveRequestUrl.js:1:11"
+      1  100.0%          Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+      1  100.0%            Function: ~"NativeModule.require bootstrap_node.js:534:34"
+      1    5.0%      Function: ~"nextTick internal/process/next_tick.js:245:20"
+      1  100.0%        Function: ~"onwrite _stream_writable.js:422:17"
+      1  100.0%          Function: ~"Socket._writeGeneric net.js:699:42"
+      1  100.0%            Function: ~"Socket._write net.js:776:35"
+      1    5.0%      Function: ~"instantiateArrayBuffer /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1606:36"
+      1  100.0%        Function: ~"doNativeWasm /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1552:24"
+      1  100.0%          Function: ~"Module.asm /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1679:27"
+      1  100.0%            Function: ~" /Users/jdogg5566/code/school/cs263/webasm-runtime/programs/monte_carlo/monte_carlo_wasm.js:1:11"
+      1    5.0%      Function: ~"inherits util.js:966:18"
+      1  100.0%        Function: ~" fs.js:1:11"
+      1  100.0%          Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+      1  100.0%            Function: ~"NativeModule.require bootstrap_node.js:534:34"
+      1    5.0%      Function: ~"deprecate internal/util.js:24:19"
+      1  100.0%        Function: ~"makeGetter bootstrap_node.js:275:24"
+      1  100.0%          Function: ~"setupGlobalVariables bootstrap_node.js:265:32"
+      1  100.0%            Function: ~"startup bootstrap_node.js:12:19"
+      1    5.0%      Function: ~"_tickCallback internal/process/next_tick.js:151:25"
+      1  100.0%        Function: ~"Module.runMain module.js:663:26"
+      1  100.0%          Function: ~"startup bootstrap_node.js:12:19"
+      1  100.0%            Function: ~" bootstrap_node.js:10:10"
+      1    5.0%      Function: ~"ReadableState _stream_readable.js:61:23"
+      1  100.0%        Function: ~"Readable _stream_readable.js:143:18"
+      1  100.0%          Function: ~"Duplex _stream_duplex.js:44:16"
+      1  100.0%            Function: ~"Socket net.js:176:16"
+      1    5.0%      Function: ~"Performance perf_hooks.js:316:14"
+      1  100.0%        Function: ~" perf_hooks.js:1:11"
+      1  100.0%          Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+      1  100.0%            Function: ~"NativeModule.require bootstrap_node.js:534:34"
+      1    5.0%      Function: ~" stream.js:1:11"
+      1  100.0%        Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+      1  100.0%          Function: ~"NativeModule.require bootstrap_node.js:534:34"
+      1  100.0%            Function: ~" fs.js:1:11"
+      1    5.0%      Function: ~" async_hooks.js:1:11"
+      1  100.0%        Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+      1  100.0%          Function: ~"NativeModule.require bootstrap_node.js:534:34"
+      1  100.0%            Function: ~" timers.js:1:11"
+      1    5.0%      Function: ~" _stream_duplex.js:1:11"
+      1  100.0%        Function: ~"NativeModule.compile bootstrap_node.js:602:44"
+      1  100.0%          Function: ~"NativeModule.require bootstrap_node.js:534:34"
+      1  100.0%            Function: ~" stream.js:1:11"
+
+     24    3.2%  "/usr/lib/system/libsystem_platform.dylib"
+
