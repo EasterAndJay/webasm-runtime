@@ -10,8 +10,8 @@ do
   dir=${dir%/}
   echo $dir
   # Compile asm + wasm
-  emcc "$dir/$dir.c" -s WASM=0 -o "$dir/$dir_asm.html"
-  emcc "$dir/$dir.c" -s WASM=1 -o "$dir/$dir_wasm.html"
+  emcc "$dir/$dir.c" -s WASM=0 -lpcre -o "$dir/$dir_asm.html"
+  emcc "$dir/$dir.c" -s WASM=1 -lpcre -o "$dir/$dir_wasm.html"
   for lang in langs; do
     if [ $lang == "js" ]; then
       js_file="$dir/$dir.js"

@@ -1972,7 +1972,7 @@ function _main() {
  STACKTOP = STACKTOP + 16|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(16|0);
  $vararg_buffer = sp;
  $0 = 0;
- $1 = (+_pi(100000000));
+ $1 = (+_pi(1000000));
  HEAPF64[$vararg_buffer>>3] = $1;
  (_printf(384,$vararg_buffer)|0);
  STACKTOP = sp;return 0;

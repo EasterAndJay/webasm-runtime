@@ -14,4 +14,4 @@ function mcpi(n) {
 }
  
 
-console.log(mcpi(100000000));
+console.log(mcpi(1000000));

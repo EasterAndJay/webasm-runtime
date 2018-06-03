@@ -16,6 +16,6 @@ double pi(int n) {
 }
  
 int main() {
-	printf("Pi is %f\n", pi(100000000));
+	printf("Pi is %f\n", pi(1000000));
 	return 0;
 }
