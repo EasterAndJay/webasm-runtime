@@ -54,4 +54,5 @@ function spectralnorm(n) {
   return Math.sqrt(vBv/vv);
 }
 
-console.log(spectralnorm(+process.argv[2]).toFixed(9));
+//console.log(spectralnorm(+process.argv[2]).toFixed(9));
+console.log(spectralnorm(100).toFixed(9));

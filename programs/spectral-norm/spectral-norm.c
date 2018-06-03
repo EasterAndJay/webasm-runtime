@@ -12,7 +12,7 @@
 #include <malloc.h>
 #include <emmintrin.h>
 
-inline double A(int i, int j) {
+double A(int i, int j) {
    return ((i+j) * (i+j+1) / 2 + i + 1);
 }
 
@@ -65,7 +65,8 @@ void mult_AtAv(double *v, double *out, const int n) {
 }
 
 int main(int argc, char**argv) {
-   int n = atoi(argv[1]);
+   //int n = atoi(argv[1]);
+   int n = 100;
    if (n <= 0) n = 2000;
    if (n & 1) n++;   // make it multiple of two
 
